@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: fa6bac748572cd9469ebba6b95c81b37
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - tileUnknown: {instanceID: 0}
+  - tileEmpty: {instanceID: 0}
+  - tileMine: {instanceID: 0}
+  - tileExploded: {instanceID: 0}
+  - tileFlag: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
