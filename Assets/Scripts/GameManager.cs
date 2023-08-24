@@ -55,13 +55,12 @@ public class GameManager : MonoBehaviour
         {
             int x = Random.Range(0, width);
             int y = Random.Range(0, height);
-            if (state[x, y].type == Cell.Type.Mine)
+            if (GetCell(x, y).type != Cell.Type.Invalid)
             {
                 i--;
                 continue;
             }
             state[x, y].type = Cell.Type.Mine;
-            state[x, y].isRevealed = true; //TESTETST
         }
     }
 
@@ -86,7 +85,6 @@ public class GameManager : MonoBehaviour
                     cell.type = Cell.Type.Empty;
                 }
 
-                cell.isRevealed = true; // TESTETST
                 state[x, y] = cell;
             }
         }
@@ -107,7 +105,7 @@ public class GameManager : MonoBehaviour
                 int y = cell.position.y + dy;
 
                 if (!IsValidPosition(x, y)) continue;
-                if (state[x, y].type == Cell.Type.Mine)
+                if (GetCell(x, y).type == Cell.Type.Mine)
                 {
                     toReturn++;
                 }
@@ -131,7 +129,17 @@ public class GameManager : MonoBehaviour
     void MakeFlag()
     {
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3 cellPos = board.tilemap.WorldToCell(worldPos);
+        Vector3Int cellPos = board.tilemap.WorldToCell(worldPos);
+        Cell cell = GetCell(cellPos.x, cellPos.y);
+
+        if (cell.type == Cell.Type.Invalid || cell.isRevealed)
+        {
+            return;
+        }
+
+        cell.isFlagged = !cell.isFlagged;
+        state[cellPos.x, cellPos.y] = cell;
+        board.Draw(state);
     }
 
     Cell GetCell(int x, int y)
@@ -139,6 +147,7 @@ public class GameManager : MonoBehaviour
         if (!IsValidPosition(x, y))
         {
             // return invalid type cell instance
+            // NOTICE: Don't return null because Cell struct can't get null.
             return new Cell();
         }
         return state[x, y];
