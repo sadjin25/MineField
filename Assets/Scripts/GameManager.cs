@@ -114,6 +114,30 @@ public class GameManager : MonoBehaviour
         return toReturn;
     }
 
+    bool IsCellNearEmpty(Cell cell)
+    {
+        if (cell.type != Cell.Type.Number && cell.type != Cell.Type.Empty) return false;
+
+        for (int dx = -1; dx < 2; dx++)
+        {
+            for (int dy = -1; dy < 2; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+
+                int x = cell.position.x + dx;
+                int y = cell.position.y + dy;
+
+                if (!IsValidPosition(x, y)) continue;
+
+                if (GetCell(x, y).type == Cell.Type.Empty)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     void Update()
     {
         if (Input.GetMouseButtonDown(1))
@@ -122,7 +146,7 @@ public class GameManager : MonoBehaviour
         }
         else if (Input.GetMouseButtonDown(0))
         {
-            // Click();
+            Reveal();
         }
     }
 
@@ -140,6 +164,71 @@ public class GameManager : MonoBehaviour
         cell.isFlagged = !cell.isFlagged;
         state[cellPos.x, cellPos.y] = cell;
         board.Draw(state);
+    }
+
+    void Reveal()
+    {
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3Int cellPos = board.tilemap.WorldToCell(worldPos);
+        Cell cell = GetCell(cellPos.x, cellPos.y);
+
+        if (cell.isFlagged || cell.isRevealed || cell.type == Cell.Type.Invalid)
+        {
+            return;
+        }
+
+        // if you've clicked bomb, then game over.
+        // else if clicked the number/empty that is near the empty cell, then dfs 
+        if (cell.type == Cell.Type.Mine)
+        {
+
+        }
+        else
+        {
+            if (IsCellNearEmpty(cell))
+            {
+                // NOTICE: It works only if revealing clicked cell is later. 
+                RevealAllEmptyCell(cellPos.x, cellPos.y, true);
+            }
+        }
+        cell.isRevealed = true;
+
+        state[cellPos.x, cellPos.y] = cell;
+        board.Draw(state);
+    }
+
+    void RevealAllEmptyCell(int x, int y, bool isFirst)
+    {
+        Cell curCell = GetCell(x, y);
+        if (!IsCellNearEmpty(curCell) && !isFirst) return;
+
+        for (int dx = -1; dx < 2; dx++)
+        {
+            for (int dy = -1; dy < 2; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+
+                int nextX = x + dx;
+                int nextY = y + dy;
+
+                if (!IsValidPosition(nextX, nextY)) continue;
+                Cell nextCell = GetCell(nextX, nextY);
+                if (nextCell.isRevealed) continue;
+
+                if (nextCell.type == Cell.Type.Number && !isFirst)
+                {
+                    nextCell.isRevealed = true;
+                    state[nextX, nextY] = nextCell;
+                    continue;
+                }
+                else if (nextCell.type == Cell.Type.Empty)
+                {
+                    nextCell.isRevealed = true;
+                    state[nextX, nextY] = nextCell;
+                    RevealAllEmptyCell(nextX, nextY, false);
+                }
+            }
+        }
     }
 
     Cell GetCell(int x, int y)
