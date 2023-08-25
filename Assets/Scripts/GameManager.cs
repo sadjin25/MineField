@@ -11,6 +11,8 @@ public class GameManager : MonoBehaviour
     Board board;
     Cell[,] state;
 
+    int score;
+
     void Awake()
     {
         board = GetComponentInChildren<Board>();
@@ -152,6 +154,8 @@ public class GameManager : MonoBehaviour
 
     void MakeFlag()
     {
+        // TODO: If player flags to the wrong place, then how many score would he loss?
+        //       but this is kinda cheating for players to easily find the mine cells. 
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3Int cellPos = board.tilemap.WorldToCell(worldPos);
         Cell cell = GetCell(cellPos.x, cellPos.y);
@@ -179,22 +183,34 @@ public class GameManager : MonoBehaviour
 
         // if you've clicked bomb, then game over.
         // else if clicked the number/empty that is near the empty cell, then dfs 
-        if (cell.type == Cell.Type.Mine)
+        switch (cell.type)
         {
-
+            case Cell.Type.Mine:
+                ChangeScore(-50);
+                Explode(cell);
+                break;
+            default:
+                ChangeScore(10);
+                if (IsCellNearEmpty(cell))
+                {
+                    // NOTICE: It works only if revealing clicked cell is later. 
+                    RevealAllEmptyCell(cellPos.x, cellPos.y, true);
+                }
+                cell.isRevealed = true;             // That is really dumb.
+                state[cellPos.x, cellPos.y] = cell;
+                break;
         }
-        else
-        {
-            if (IsCellNearEmpty(cell))
-            {
-                // NOTICE: It works only if revealing clicked cell is later. 
-                RevealAllEmptyCell(cellPos.x, cellPos.y, true);
-            }
-        }
-        cell.isRevealed = true;
 
-        state[cellPos.x, cellPos.y] = cell;
         board.Draw(state);
+    }
+
+    void Explode(Cell cell)
+    {
+        // Reduce player's score. 
+        if (cell.type != Cell.Type.Mine) return;
+        cell.isExploded = true;
+        cell.isRevealed = true;
+        state[cell.position.x, cell.position.y] = cell;
     }
 
     void RevealAllEmptyCell(int x, int y, bool isFirst)
@@ -245,5 +261,10 @@ public class GameManager : MonoBehaviour
     bool IsValidPosition(int x, int y)
     {
         return !(x < 0 || y < 0 || x >= width || y >= height);
+    }
+
+    void ChangeScore(int addedScore)
+    {
+        score += addedScore;
     }
 }
