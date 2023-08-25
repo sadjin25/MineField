@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    enum ScoreTypes
+    {
+        MINE_EXPLODE = -40,
+        REVEALED = 10,
+    }
+
     [SerializeField] int width = 16;
     [SerializeField] int height = 16;
     [SerializeField] int mineCount = 4;
@@ -94,8 +100,6 @@ public class GameManager : MonoBehaviour
 
     int CountNumbers(Cell cell)
     {
-        if (cell.type != Cell.Type.Invalid) return -1;
-
         int toReturn = 0;
         for (int dx = -1; dx < 2; dx++)
         {
@@ -108,6 +112,32 @@ public class GameManager : MonoBehaviour
 
                 if (!IsValidPosition(x, y)) continue;
                 if (GetCell(x, y).type == Cell.Type.Mine)
+                {
+                    toReturn++;
+                }
+            }
+        }
+        return toReturn;
+    }
+
+    int CountFoundMines(Cell cell)
+    {
+        if (!cell.isRevealed) return -1;
+
+        int toReturn = 0;
+        for (int dx = -1; dx < 2; dx++)
+        {
+            for (int dy = -1; dy < 2; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+
+                int x = cell.position.x + dx;
+                int y = cell.position.y + dy;
+
+                if (!IsValidPosition(x, y)) continue;
+                Cell nextCell = GetCell(x, y);
+
+                if (nextCell.isFlagged || (nextCell.isRevealed && nextCell.type == Cell.Type.Mine))
                 {
                     toReturn++;
                 }
@@ -148,7 +178,18 @@ public class GameManager : MonoBehaviour
         }
         else if (Input.GetMouseButtonDown(0))
         {
-            Reveal();
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3Int cellPos = board.tilemap.WorldToCell(worldPos);
+            Cell cell = GetCell(cellPos.x, cellPos.y);
+
+            if (cell.isRevealed)
+            {
+                OpenNearCells(cell);
+            }
+            else
+            {
+                Reveal(cell);
+            }
         }
     }
 
@@ -170,35 +211,61 @@ public class GameManager : MonoBehaviour
         board.Draw(state);
     }
 
-    void Reveal()
+    void OpenNearCells(Cell cell)
     {
-        Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3Int cellPos = board.tilemap.WorldToCell(worldPos);
-        Cell cell = GetCell(cellPos.x, cellPos.y);
+        // If player clicked revealed cell, then open near cells when flagging is right/wrong - update score. 
+        if (!cell.isRevealed)
+        {
+            return;
+        }
+        int mineNums = CountNumbers(cell);
+        int foundMineNums = CountFoundMines(cell);
+        if (mineNums == foundMineNums)
+        {
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
 
+                    int x = cell.position.x + dx;
+                    int y = cell.position.y + dy;
+
+                    if (!IsValidPosition(x, y)) continue;
+                    Reveal(GetCell(x, y));
+                }
+            }
+        }
+    }
+
+    void Reveal(Cell cell)
+    {
+        // if you've clicked bomb, then game over.
+        // else if clicked the number/empty that is near the empty cell, then dfs 
         if (cell.isFlagged || cell.isRevealed || cell.type == Cell.Type.Invalid)
         {
             return;
         }
 
-        // if you've clicked bomb, then game over.
-        // else if clicked the number/empty that is near the empty cell, then dfs 
-        switch (cell.type)
+        else
         {
-            case Cell.Type.Mine:
-                ChangeScore(-50);
-                Explode(cell);
-                break;
-            default:
-                ChangeScore(10);
-                if (IsCellNearEmpty(cell))
-                {
-                    // NOTICE: It works only if revealing clicked cell is later. 
-                    RevealAllEmptyCell(cellPos.x, cellPos.y, true);
-                }
-                cell.isRevealed = true;             // That is really dumb.
-                state[cellPos.x, cellPos.y] = cell;
-                break;
+            switch (cell.type)
+            {
+                case Cell.Type.Mine:
+                    ChangeScore(ScoreTypes.MINE_EXPLODE);
+                    Explode(cell);
+                    break;
+                default:
+                    ChangeScore(ScoreTypes.REVEALED);
+                    if (IsCellNearEmpty(cell))
+                    {
+                        // NOTICE: It works only if revealing clicked cell is later. 
+                        RevealAllEmptyCell(cell.position.x, cell.position.y, true);
+                    }
+                    cell.isRevealed = true;             // That is really dumb.
+                    state[cell.position.x, cell.position.y] = cell;
+                    break;
+            }
         }
 
         board.Draw(state);
@@ -263,8 +330,8 @@ public class GameManager : MonoBehaviour
         return !(x < 0 || y < 0 || x >= width || y >= height);
     }
 
-    void ChangeScore(int addedScore)
+    void ChangeScore(ScoreTypes scoreType)
     {
-        score += addedScore;
+        score += (int)scoreType;
     }
 }
