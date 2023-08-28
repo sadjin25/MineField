@@ -259,10 +259,9 @@ public class GameManager : MonoBehaviour
                     ChangeScore(ScoreTypes.REVEALED);
                     if (IsCellNearEmpty(cell))
                     {
-                        // NOTICE: It works only if revealing clicked cell is later. 
-                        RevealAllEmptyCell(cell.position.x, cell.position.y, true);
+                        RevealAllEmptyCell(cell);
                     }
-                    cell.isRevealed = true;             // That is really dumb.
+                    cell.isRevealed = true;
                     state[cell.position.x, cell.position.y] = cell;
                     break;
             }
@@ -280,38 +279,26 @@ public class GameManager : MonoBehaviour
         state[cell.position.x, cell.position.y] = cell;
     }
 
-    void RevealAllEmptyCell(int x, int y, bool isFirst)
+    void RevealAllEmptyCell(Cell cell)
     {
-        Cell curCell = GetCell(x, y);
-        if (!IsCellNearEmpty(curCell) && !isFirst) return;
+        if (cell.isRevealed) return;
+        if (cell.type != Cell.Type.Number && cell.type != Cell.Type.Empty) return;
 
-        for (int dx = -1; dx < 2; dx++)
+        cell.isRevealed = true;
+        state[cell.position.x, cell.position.y] = cell;
+        if (cell.type == Cell.Type.Number)
         {
-            for (int dy = -1; dy < 2; dy++)
-            {
-                if (dx == 0 && dy == 0) continue;
-
-                int nextX = x + dx;
-                int nextY = y + dy;
-
-                if (!IsValidPosition(nextX, nextY)) continue;
-                Cell nextCell = GetCell(nextX, nextY);
-                if (nextCell.isRevealed) continue;
-
-                if (nextCell.type == Cell.Type.Number && !isFirst)
-                {
-                    nextCell.isRevealed = true;
-                    state[nextX, nextY] = nextCell;
-                    continue;
-                }
-                else if (nextCell.type == Cell.Type.Empty)
-                {
-                    nextCell.isRevealed = true;
-                    state[nextX, nextY] = nextCell;
-                    RevealAllEmptyCell(nextX, nextY, false);
-                }
-            }
+            return;
         }
+
+        RevealAllEmptyCell(GetCell(cell.position.x - 1, cell.position.y));
+        RevealAllEmptyCell(GetCell(cell.position.x + 1, cell.position.y));
+        RevealAllEmptyCell(GetCell(cell.position.x, cell.position.y + 1));
+        RevealAllEmptyCell(GetCell(cell.position.x, cell.position.y - 1));
+        RevealAllEmptyCell(GetCell(cell.position.x - 1, cell.position.y + 1));
+        RevealAllEmptyCell(GetCell(cell.position.x - 1, cell.position.y - 1));
+        RevealAllEmptyCell(GetCell(cell.position.x + 1, cell.position.y + 1));
+        RevealAllEmptyCell(GetCell(cell.position.x + 1, cell.position.y - 1));
     }
 
     Cell GetCell(int x, int y)
