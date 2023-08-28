@@ -193,6 +193,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void GetClickInput()
+    {
+
+    }
+
     void MakeFlag()
     {
         // TODO: If player flags to the wrong place, then how many score would he loss?
