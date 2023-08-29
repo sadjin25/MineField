@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour
         REVEALED = 10,
     }
 
+
+    //BOARD
     [SerializeField] int width = 16;
     [SerializeField] int height = 16;
     [SerializeField] int mineCount = 4;
@@ -17,8 +19,10 @@ public class GameManager : MonoBehaviour
     Board board;
     Cell[,] state;
 
+    //SCORE
     int score;
 
+    //MOUSE CONTROL
     bool isMouseActivated = true;
     bool nextMouseIsActive;
     [SerializeField] float mouseWaitTime = 0.2f;
@@ -33,6 +37,32 @@ public class GameManager : MonoBehaviour
         CameraControl.Instance.OnDrag += MouseToggle;
         NewGame();
     }
+
+    void Update()
+    {
+        if (!isMouseActivated) return;
+        if (Input.GetMouseButtonDown(1))
+        {
+            MakeFlag();
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3Int cellPos = board.tilemap.WorldToCell(worldPos);
+            Cell cell = GetCell(cellPos.x, cellPos.y);
+
+            if (cell.isRevealed)
+            {
+                OpenNearCells(cell);
+            }
+            else
+            {
+                Reveal(cell);
+            }
+        }
+    }
+
+    #region GameSetting
 
     void NewGame()
     {
@@ -102,6 +132,10 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+
+    #endregion
+
+    #region CheckingStuffs
 
     int CountNumbers(Cell cell)
     {
@@ -175,29 +209,14 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-    void Update()
+    bool IsValidPosition(int x, int y)
     {
-        if (!isMouseActivated) return;
-        if (Input.GetMouseButtonDown(1))
-        {
-            MakeFlag();
-        }
-        else if (Input.GetMouseButtonUp(0))
-        {
-            Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector3Int cellPos = board.tilemap.WorldToCell(worldPos);
-            Cell cell = GetCell(cellPos.x, cellPos.y);
-
-            if (cell.isRevealed)
-            {
-                OpenNearCells(cell);
-            }
-            else
-            {
-                Reveal(cell);
-            }
-        }
+        return !(x < 0 || y < 0 || x >= width || y >= height);
     }
+
+    #endregion
+
+    #region MouseSettingControl
 
     void MouseToggle(object s, CameraControl.OnDragEventArgs e)
     {
@@ -220,6 +239,10 @@ public class GameManager : MonoBehaviour
         isMouseActivated = true;
     }
 
+    #endregion
+
+    #region MouseActions
+
     void MakeFlag()
     {
         // TODO: If player flags to the wrong place, then how many score would he loss?
@@ -236,33 +259,6 @@ public class GameManager : MonoBehaviour
         cell.isFlagged = !cell.isFlagged;
         state[cellPos.x, cellPos.y] = cell;
         board.Draw(state);
-    }
-
-    void OpenNearCells(Cell cell)
-    {
-        // If player clicked revealed cell, then open near cells when flagging is right/wrong - update score. 
-        if (!cell.isRevealed)
-        {
-            return;
-        }
-        int mineNums = CountNumbers(cell);
-        int foundMineNums = CountFoundMines(cell);
-        if (mineNums == foundMineNums)
-        {
-            for (int dx = -1; dx < 2; dx++)
-            {
-                for (int dy = -1; dy < 2; dy++)
-                {
-                    if (dx == 0 && dy == 0) continue;
-
-                    int x = cell.position.x + dx;
-                    int y = cell.position.y + dy;
-
-                    if (!IsValidPosition(x, y)) continue;
-                    Reveal(GetCell(x, y));
-                }
-            }
-        }
     }
 
     void Reveal(Cell cell)
@@ -297,6 +293,33 @@ public class GameManager : MonoBehaviour
         board.Draw(state);
     }
 
+    void OpenNearCells(Cell cell)
+    {
+        // If player clicked revealed cell, then open near cells when flagging is right/wrong - update score. 
+        if (!cell.isRevealed)
+        {
+            return;
+        }
+        int mineNums = CountNumbers(cell);
+        int foundMineNums = CountFoundMines(cell);
+        if (mineNums == foundMineNums)
+        {
+            for (int dx = -1; dx < 2; dx++)
+            {
+                for (int dy = -1; dy < 2; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+
+                    int x = cell.position.x + dx;
+                    int y = cell.position.y + dy;
+
+                    if (!IsValidPosition(x, y)) continue;
+                    Reveal(GetCell(x, y));
+                }
+            }
+        }
+    }
+
     void Explode(Cell cell)
     {
         // Reduce player's score. 
@@ -328,6 +351,8 @@ public class GameManager : MonoBehaviour
         RevealAllEmptyCell(GetCell(cell.position.x + 1, cell.position.y - 1));
     }
 
+    #endregion
+
     Cell GetCell(int x, int y)
     {
         if (!IsValidPosition(x, y))
@@ -339,13 +364,10 @@ public class GameManager : MonoBehaviour
         return state[x, y];
     }
 
-    bool IsValidPosition(int x, int y)
-    {
-        return !(x < 0 || y < 0 || x >= width || y >= height);
-    }
-
+    #region Score
     void ChangeScore(ScoreTypes scoreType)
     {
         score += (int)scoreType;
     }
+    #endregion
 }
