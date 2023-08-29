@@ -367,7 +367,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a35fee651df2e874492b0c88410e8ac8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  zoomScale: 1
+  minDragChkDist: 0.04
+  zoomScale: 0.5
 --- !u!1 &2105590568
 GameObject:
   m_ObjectHideFlags: 0
@@ -413,8 +414,8 @@ MonoBehaviour:
   - m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 519420033}
-        m_TargetAssemblyTypeName: CameraDragging, Assembly-CSharp
-        m_MethodName: OnDrag
+        m_TargetAssemblyTypeName: CameraControl, Assembly-CSharp
+        m_MethodName: OnDrag_InputSystem
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -426,22 +427,6 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 04387c7e-7be0-47a9-b16e-267ab271271b
     m_ActionName: Mouse/Click[/Mouse/leftButton,/Mouse/rightButton]
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 519420033}
-        m_TargetAssemblyTypeName: CameraDragging, Assembly-CSharp
-        m_MethodName: OnWheel
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 0d5ea9e9-5d8f-483f-88d8-e28d78de060b
-    m_ActionName: Mouse/Wheel[/Mouse/scroll]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Mouse
@@ -523,3 +508,4 @@ MonoBehaviour:
   width: 16
   height: 10
   mineCount: 10
+  mouseWaitTime: 0.2

@@ -2,17 +2,29 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 
 public class CameraControl : MonoBehaviour
 {
-    Vector3 origin;
-    Vector3 difference;
+    public static CameraControl Instance { get; private set; }
 
+    public event EventHandler<OnDragEventArgs> OnDrag;
+    public class OnDragEventArgs : EventArgs
+    {
+        public bool isDragging;
+    }
     Camera mainCam;
 
     // DRAG
+    Vector3 originMouseWorldPos;
+    Vector3 originMouseViewportPos;
+    Vector3 mouseCamDifference;
+    Vector3 GetMouseWorldPos => mainCam.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+    Vector3 GetMouseViewportPos => mainCam.ScreenToViewportPoint(Mouse.current.position.ReadValue());
+
     bool isDragging;
-    Vector3 GetMousePos => mainCam.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+    [SerializeField] float minDragChkDist = 0.05f;
+
 
     // SCROLL
     Vector2 wheelDelta;
@@ -23,14 +35,20 @@ public class CameraControl : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
         mainCam = Camera.main;
     }
 
-    public void OnDrag(InputAction.CallbackContext ctx)
+    public void OnDrag_InputSystem(InputAction.CallbackContext ctx)
     {
         if (ctx.started)
         {
-            origin = mainCam.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            originMouseWorldPos = mainCam.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            originMouseViewportPos = mainCam.ScreenToViewportPoint(Mouse.current.position.ReadValue());
+        }
+        if (ctx.canceled)
+        {
+            OnDrag?.Invoke(this, new OnDragEventArgs { isDragging = false });
         }
         isDragging = ctx.started || ctx.performed;
     }
@@ -39,8 +57,15 @@ public class CameraControl : MonoBehaviour
     {
         if (isDragging)
         {
-            difference = GetMousePos - transform.position;
-            transform.position = origin - difference;
+            mouseCamDifference = GetMouseWorldPos - transform.position;
+
+            // check minimum drag distance, deactivate mouse click for cell opening.
+            if ((GetMouseViewportPos - originMouseViewportPos).magnitude >= minDragChkDist) // 0.04f is enough? maybe. 
+            {
+                OnDrag?.Invoke(this, new OnDragEventArgs { isDragging = true });
+            }
+
+            transform.position = originMouseWorldPos - mouseCamDifference;
         }
 
         #region Scrolling

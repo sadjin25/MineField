@@ -19,6 +19,10 @@ public class GameManager : MonoBehaviour
 
     int score;
 
+    bool isMouseActivated = true;
+    bool nextMouseIsActive;
+    [SerializeField] float mouseWaitTime = 0.2f;
+
     void Awake()
     {
         board = GetComponentInChildren<Board>();
@@ -26,6 +30,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        CameraControl.Instance.OnDrag += MouseToggle;
         NewGame();
     }
 
@@ -172,11 +177,12 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        if (!isMouseActivated) return;
         if (Input.GetMouseButtonDown(1))
         {
             MakeFlag();
         }
-        else if (Input.GetMouseButtonDown(0))
+        else if (Input.GetMouseButtonUp(0))
         {
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             Vector3Int cellPos = board.tilemap.WorldToCell(worldPos);
@@ -193,9 +199,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void GetClickInput()
+    void MouseToggle(object s, CameraControl.OnDragEventArgs e)
     {
+        nextMouseIsActive = !e.isDragging;
+        if (nextMouseIsActive)
+        {
+            Debug.Log("EVENT CALLED = MOUSE TRUE");
+            StartCoroutine(WaitMouseActivate(mouseWaitTime));
+        }
+        else
+        {
+            Debug.Log("EVENT CALLED = MOUSE FALSE");
+            isMouseActivated = false;
+        }
+    }
 
+    IEnumerator WaitMouseActivate(float time)
+    {
+        yield return new WaitForSecondsRealtime(time);
+        isMouseActivated = true;
     }
 
     void MakeFlag()
