@@ -10,9 +10,16 @@ public class CameraDragging : MonoBehaviour
 
     Camera mainCam;
 
+    // DRAG
     bool isDragging;
-
     Vector3 GetMousePos => mainCam.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+
+    // SCROLL
+    Vector2 wheelDelta;
+    [SerializeField] float zoomScale = .5f;
+    readonly float minCamSize = 4f;
+    readonly float maxCamSize = 25f;
+
 
     void Awake()
     {
@@ -30,8 +37,15 @@ public class CameraDragging : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!isDragging) return;
-        difference = GetMousePos - transform.position;
-        transform.position = origin - difference;
+        if (isDragging)
+        {
+            difference = GetMousePos - transform.position;
+            transform.position = origin - difference;
+        }
+
+        #region Scrolling
+        wheelDelta = Mouse.current.scroll.ReadValue().normalized;
+        mainCam.orthographicSize = Mathf.Clamp(mainCam.orthographicSize - wheelDelta.y * zoomScale, minCamSize, maxCamSize);
+        #endregion
     }
 }
