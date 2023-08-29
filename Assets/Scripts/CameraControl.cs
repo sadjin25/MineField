@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class CameraDragging : MonoBehaviour
+public class CameraControl : MonoBehaviour
 {
     Vector3 origin;
     Vector3 difference;
