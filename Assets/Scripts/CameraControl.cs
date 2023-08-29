@@ -62,6 +62,7 @@ public class CameraControl : MonoBehaviour
             // check minimum drag distance, deactivate mouse click for cell opening.
             if ((GetMouseViewportPos - originMouseViewportPos).magnitude >= minDragChkDist) // 0.04f is enough? maybe. 
             {
+                // NOTICE : OnDrag event is called EVERYTIME the drag distance is over minDragChkDist
                 OnDrag?.Invoke(this, new OnDragEventArgs { isDragging = true });
             }
 
