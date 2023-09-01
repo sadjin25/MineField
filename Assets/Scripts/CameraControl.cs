@@ -29,8 +29,8 @@ public class CameraControl : MonoBehaviour
     // SCROLL
     Vector2 wheelDelta;
     [SerializeField] float zoomScale = .5f;
-    readonly float minCamSize = 4f;
-    readonly float maxCamSize = 25f;
+    readonly float minCamSize = 3f;
+    readonly float maxCamSize = 8f;
 
 
     void Awake()
